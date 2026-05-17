@@ -1,0 +1,179 @@
+﻿services:
+  api-gateway:
+    build:
+      context: .
+      dockerfile: api-gateway/Dockerfile
+    container_name: smartdoc-api-gateway
+    env_file: .env
+    ports:
+      - "32100:8600"
+    depends_on:
+      - upload-service
+      - preprocessing-service
+      - ocr-service
+      - classification-service
+      - extraction-service
+      - validation-service
+      - storage-service
+      - notification-service
+      - redis
+      - rabbitmq
+    networks: [smartdoc-net]
+
+  api-worker:
+    build:
+      context: .
+      dockerfile: api-gateway/Dockerfile
+    container_name: smartdoc-api-worker
+    env_file: .env
+    command: ["celery", "-A", "app.celery_app.celery_app", "worker", "--loglevel=info", "--pool=solo"]
+    depends_on:
+      - api-gateway
+      - rabbitmq
+      - redis
+    networks: [smartdoc-net]
+
+  upload-service:
+    build:
+      context: .
+      dockerfile: upload-service/Dockerfile
+    container_name: smartdoc-upload
+    env_file: .env
+    ports:
+      - "32101:8601"
+    networks: [smartdoc-net]
+
+  preprocessing-service:
+    build:
+      context: .
+      dockerfile: preprocessing-service/Dockerfile
+    container_name: smartdoc-preprocessing
+    env_file: .env
+    ports:
+      - "32102:8602"
+    networks: [smartdoc-net]
+
+  ocr-service:
+    build:
+      context: .
+      dockerfile: ocr-service/Dockerfile
+    container_name: smartdoc-ocr
+    env_file: .env
+    ports:
+      - "32103:8603"
+    networks: [smartdoc-net]
+
+  classification-service:
+    build:
+      context: .
+      dockerfile: classification-service/Dockerfile
+    container_name: smartdoc-classification
+    env_file: .env
+    ports:
+      - "32104:8604"
+    networks: [smartdoc-net]
+
+  extraction-service:
+    build:
+      context: .
+      dockerfile: extraction-service/Dockerfile
+    container_name: smartdoc-extraction
+    env_file: .env
+    ports:
+      - "32105:8605"
+    networks: [smartdoc-net]
+
+  validation-service:
+    build:
+      context: .
+      dockerfile: validation-service/Dockerfile
+    container_name: smartdoc-validation
+    env_file: .env
+    ports:
+      - "32106:8606"
+    networks: [smartdoc-net]
+
+  storage-service:
+    build:
+      context: .
+      dockerfile: storage-service/Dockerfile
+    container_name: smartdoc-storage
+    env_file: .env
+    ports:
+      - "32107:8607"
+    depends_on:
+      - postgres
+      - minio
+    networks: [smartdoc-net]
+
+  notification-service:
+    build:
+      context: .
+      dockerfile: notification-service/Dockerfile
+    container_name: smartdoc-notification
+    env_file: .env
+    ports:
+      - "8608:8608"
+    networks: [smartdoc-net]
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    container_name: smartdoc-frontend
+    env_file: .env
+    ports:
+      - "5173:5173"
+    depends_on:
+      - api-gateway
+    networks: [smartdoc-net]
+
+  postgres:
+    image: postgres:16
+    container_name: smartdoc-postgres
+    environment:
+      POSTGRES_DB: smartdoc
+      POSTGRES_USER: smartdoc
+      POSTGRES_PASSWORD: smartdoc
+    ports:
+      - "32108:5432"
+    volumes:
+      - smartdoc_postgres_data:/var/lib/postgresql/data
+    networks: [smartdoc-net]
+
+  redis:
+    image: redis:7
+    container_name: smartdoc-redis
+    ports:
+      - "32109:6379"
+    networks: [smartdoc-net]
+
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: smartdoc-rabbitmq
+    ports:
+      - "32110:5672"
+      - "32111:15672"
+    networks: [smartdoc-net]
+
+  minio:
+    image: minio/minio:latest
+    container_name: smartdoc-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: smartdoc
+      MINIO_ROOT_PASSWORD: smartdoc123
+    ports:
+      - "32112:9000"
+      - "32113:9001"
+    volumes:
+      - smartdoc_minio_data:/data
+    networks: [smartdoc-net]
+
+networks:
+  smartdoc-net:
+    driver: bridge
+
+volumes:
+  smartdoc_postgres_data:
+  smartdoc_minio_data:
