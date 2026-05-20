@@ -45,7 +45,7 @@ Task_4_SmartDocProcessor/
 ## Quick start
 
 ```bash
-cd d:\Шарага\Кинжа4\Task_4_SmartDocProcessor
+cd 'your/project/folder'
 docker compose up --build -d
 ```
 
