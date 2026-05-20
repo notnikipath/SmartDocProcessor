@@ -5,7 +5,7 @@ SmartDoc Processor is a distributed document intelligence platform for OCR, clas
 ## Repository layout
 
 ```text
-Task_4_SmartDocProcessor/
+SmartDocProcessor/
 ├── api-gateway/
 ├── upload-service/
 ├── preprocessing-service/
