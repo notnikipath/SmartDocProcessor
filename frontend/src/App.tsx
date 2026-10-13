@@ -239,7 +239,7 @@ export default function App() {
     <Container maxWidth="xl" sx={{ py: 4 }}>
       <Stack spacing={3}>
         <Paper elevation={0} sx={{ p: 3, border: "1px solid", borderColor: "divider", bgcolor: "rgba(255,255,255,0.88)" }}>
-          <Typography variant="h3" sx={{ mb: 1 }}>
+          <Typography component="h1" variant="h3" sx={{ mb: 1 }}>
             SmartDoc Processor
           </Typography>
           <Typography sx={{ color: "text.secondary", maxWidth: 860 }}>

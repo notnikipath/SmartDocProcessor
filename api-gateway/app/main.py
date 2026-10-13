@@ -1,10 +1,11 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from typing import Any
 
 import httpx
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.concurrency import run_in_threadpool
 
 from shared.smartdoc_common import (
     AuthRequest,
@@ -144,7 +145,7 @@ async def upload_document(request: DocumentUploadRequest) -> dict:
             request.model_dump(mode="json"),
         )
         job = await _create_job(client, uploaded["doc_id"], request.actor_id, request.actor_role)
-    launch = _launch_pipeline(job, uploaded["doc_id"], request.actor_id, request.actor_role)
+    launch = await run_in_threadpool(_launch_pipeline, job, uploaded["doc_id"], request.actor_id, request.actor_role)
     return {"document": uploaded, "job": job, "pipeline": launch}
 
 
@@ -159,7 +160,9 @@ async def upload_batch(request: BatchUploadRequest) -> dict:
         jobs = []
         for item in uploaded["items"]:
             job = await _create_job(client, item["doc_id"], request.actor_id, request.actor_role)
-            launch = _launch_pipeline(job, item["doc_id"], request.actor_id, request.actor_role)
+            launch = await run_in_threadpool(
+                _launch_pipeline, job, item["doc_id"], request.actor_id, request.actor_role
+            )
             jobs.append({"job": job, "pipeline": launch, "doc_id": item["doc_id"]})
     return {"items": uploaded["items"], "jobs": jobs, "count": uploaded["count"]}
 
@@ -173,7 +176,7 @@ async def upload_scanner(request: ScannerUploadRequest) -> dict:
             request.model_dump(mode="json"),
         )
         job = await _create_job(client, uploaded["doc_id"], request.actor_id, request.actor_role)
-    launch = _launch_pipeline(job, uploaded["doc_id"], request.actor_id, request.actor_role)
+    launch = await run_in_threadpool(_launch_pipeline, job, uploaded["doc_id"], request.actor_id, request.actor_role)
     return {"document": uploaded, "job": job, "pipeline": launch}
 
 
@@ -181,7 +184,7 @@ async def upload_scanner(request: ScannerUploadRequest) -> dict:
 async def start_pipeline(doc_id: str, actor_id: str, actor_role: Role = Role.OPERATOR) -> dict:
     async with httpx.AsyncClient(timeout=20.0) as client:
         job = await _create_job(client, doc_id, actor_id, actor_role)
-    launch = _launch_pipeline(job, doc_id, actor_id, actor_role)
+    launch = await run_in_threadpool(_launch_pipeline, job, doc_id, actor_id, actor_role)
     return {"job": job, "pipeline": launch}
 
 
@@ -189,7 +192,7 @@ async def start_pipeline(doc_id: str, actor_id: str, actor_role: Role = Role.OPE
 async def restart_pipeline(doc_id: str, stage: PipelineStage, actor_id: str, actor_role: Role = Role.ADMIN) -> dict:
     async with httpx.AsyncClient(timeout=20.0) as client:
         job = await _create_job(client, doc_id, actor_id, actor_role, restart_from=stage)
-    launch = _launch_pipeline(job, doc_id, actor_id, actor_role, restart_from=stage)
+    launch = await run_in_threadpool(_launch_pipeline, job, doc_id, actor_id, actor_role, restart_from=stage)
     return {"job": job, "pipeline": launch}
 
 

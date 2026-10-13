@@ -147,7 +147,21 @@ async def get_artifacts(doc_id: str) -> dict:
 
 @app.put("/results/{doc_id}")
 async def save_result(doc_id: str, request: StoreResultRequest) -> dict:
-    _assert_permission(request.actor_role, "store:write")
+    if doc_id != request.doc_id:
+        raise HTTPException(status_code=400, detail="Document ID does not match the result")
+    if not has_permission(request.actor_role, "store:write"):
+        job = jobs.get(request.pipeline_job_id)
+        owns_running_pipeline = (
+            has_permission(request.actor_role, "pipeline:run")
+            and job is not None
+            and job.doc_id == doc_id
+            and job.actor_id == request.actor_id
+            and job.actor_role == request.actor_role
+            and job.status == JobStatus.RUNNING
+            and job.current_stage == PipelineStage.STORE
+        )
+        if not owns_running_pipeline:
+            raise HTTPException(status_code=403, detail="Result requires an authorized running pipeline")
     serialized = json.dumps(
         {
             "doc_id": request.doc_id,

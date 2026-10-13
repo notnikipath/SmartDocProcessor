@@ -1,4 +1,4 @@
-﻿# SmartDoc Processor
+# SmartDoc Processor
 
 SmartDoc Processor is a distributed document intelligence platform for OCR, classification, extraction, validation, and export.
 
@@ -45,7 +45,7 @@ SmartDocProcessor/
 ## Quick start
 
 ```bash
-cd 'your/project/folder'
+cd SmartDocProcessor
 docker compose up --build -d
 ```
 
