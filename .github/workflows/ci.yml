@@ -1,4 +1,4 @@
-﻿name: SmartDoc CI
+name: SmartDoc CI
 
 on:
   push:
@@ -30,4 +30,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Validate compose
-        run: docker compose config
+        run: |
+          cp .env.example .env
+          docker compose config --quiet
